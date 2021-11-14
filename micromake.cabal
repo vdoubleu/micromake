@@ -26,13 +26,17 @@ source-repository head
 library
   exposed-modules:
       Lib
+    , FlagProcessing
+    , FileManager
   other-modules:
       Paths_micromake
   hs-source-dirs:
       src
   build-depends:
       base >=4.7 && <5
+    , unordered-containers
     , process
+    , directory
   default-language: Haskell2010
 
 executable micromake

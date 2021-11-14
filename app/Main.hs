@@ -1,35 +1,60 @@
 module Main where
 
 import System.Environment
-import System.Exit
 import System.IO
 import System.Process
 import Data.Char
 import Lib
+import FlagProcessing
+import FileManager
 
-main = getArgs >>= parse >>= minimake
+main = getArgs >>= parse >>= micromake
 
 parse [] = do 
   putStrLn "---Running Stored Commands---"
   runCommands
-parse s = 
-  if (containsHelp s) then
-    putStrLn minimakeHelpMsg >> exit
-  else if (containsVers s) then
-    putStrLn "MiniMake Version 0.01" >> exit
+parse a = 
+  if (containsFlag a "help") then
+    putStrLn micromakeHelpMsg >> exit
+  else if (containsFlag a "version") then
+    putStrLn "MicroMake Version 0.01" >> exit
+  else if (containsFlag a "allCurrentFolder") then
+    do 
+      putStrLn "---Saving Compile All In Current Dir---"
+      saveRunAllCmd
   else
     do 
       putStrLn "---Storing Commands---"
-      saveCommands s 
+      saveCommands a 
       putStrLn "---Done---"
       exit
 
-exit = exitWith ExitSuccess
-
-minimake :: String -> IO()
-minimake s = do 
+micromake :: String -> IO()
+micromake s = do 
   putStr s
   putStrLn "---Done---"
+
+saveRunAllCmd :: IO(String)
+saveRunAllCmd = do
+  i <- inCppFolder 
+  currDirFiles <- getCurrDirFiles
+  if i then
+    writeFile "MicroMake" 
+      (unlines 
+        [
+          "g++ " ++ (concat (cppFiles currDirFiles)),
+          "./a.out"
+        ]
+      )
+  else
+    writeFile "MicroMake" 
+      (unlines
+        [
+          "gcc " ++ (concat (cFiles currDirFiles)),
+          "./a.out"
+        ]
+      )
+  return ""
 
 runCommands :: IO(String)
 runCommands = do
@@ -54,14 +79,9 @@ displayWrittenCommands (s:ss) = do
   putStrLn s
   displayWrittenCommands ss
 
-containsHelp :: [String] -> Bool
-containsHelp strs = ("-h" `elem` strs) || ("-help" `elem` strs)
 
-containsVers :: [String] -> Bool
-containsVers strs = ("-v" `elem` strs) || ("-version" `elem` strs)
-
-minimakeHelpMsg = 
-  "MiniMake Help\nMinimake is designed to be an easy to use \nand ultra light weight version of make, \ndesigned to help you quickly run and build \nsmall programs that are too small to \nrequire you to need the full power of make" 
+micromakeHelpMsg = 
+  "MicroMake Help\nMicromake is designed to be an easy to use \nand ultra light weight version of make, \ndesigned to help you quickly run and build \nsmall programs that are too small to \nrequire you to need the full power of make" 
     ++ "\n\nTo use micromake, starting by running \'micromake\' (or just \'mm\') followed by the build commands: \nmm \"<build command 1>\" \"<build command 2>\" \"<build command ...>\""
     ++ "\n\nThis will create the MicoMake file which stores the build commands, \nthen run \'mm\' or \'micromake\' again in the same directory to run them."
   
